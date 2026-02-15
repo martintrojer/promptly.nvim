@@ -44,12 +44,6 @@ local defaults = {
 			},
 			apply = {
 				default = "first_suggestion",
-				handlers = {
-					keys = "feedkeys",
-					replace_selection = "replace_selection",
-					replace_buffer = "replace_buffer",
-					ex_command = "nvim_cmd",
-				},
 			},
 			ui = {
 				prompt_title = " Code Assistant Prompt ",

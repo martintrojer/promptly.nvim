@@ -114,12 +114,6 @@ require("promptly").setup({
       },
       apply = {
         default = "first_suggestion", -- optional
-        handlers = {
-          keys = "feedkeys", -- optional
-          replace_selection = "replace_selection", -- optional
-          replace_buffer = "replace_buffer", -- optional
-          ex_command = "nvim_cmd", -- optional
-        },
       },
       ui = {
         prompt_title = " Promptly Prompt ", -- optional
