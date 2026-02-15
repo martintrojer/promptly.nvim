@@ -3,6 +3,20 @@ local Popup = require("nui.popup")
 local event = require("nui.utils.autocmd").event
 
 local M = {}
+local PREVIEW_MAX = 100
+
+local function payload_preview(payload)
+	if type(payload) ~= "string" or payload == "" then
+		return nil
+	end
+
+	local normalized = payload:gsub("\n", "\\n")
+	if #normalized > PREVIEW_MAX then
+		return normalized:sub(1, PREVIEW_MAX - 3) .. "..."
+	end
+
+	return normalized
+end
 
 function M.prompt(opts, on_submit)
 	local profile_names = opts.profile_names or {}
@@ -118,7 +132,13 @@ function M.result(answer, profile, on_apply)
 	else
 		for i, suggestion in ipairs(answer.suggestions) do
 			local label = suggestion.label or "Apply"
-			table.insert(lines, string.format("%d. %s [%s]", i, label, suggestion.kind))
+			local kind = suggestion.kind or "unknown"
+			local preview = payload_preview(suggestion.payload)
+			if preview then
+				table.insert(lines, string.format("%d. %s [%s] %s", i, label, kind, preview))
+			else
+				table.insert(lines, string.format("%d. %s [%s]", i, label, kind))
+			end
 		end
 		table.insert(lines, "")
 		table.insert(lines, "<CR>: Apply #1   1-9: Apply choice   <Esc>/q: Close")
