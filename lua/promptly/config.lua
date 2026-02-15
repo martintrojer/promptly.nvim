@@ -147,7 +147,12 @@ function M.setup(opts)
 end
 
 function M.current_provider()
-	local profile = M.current_profile()
+	local profile_name = M.current_profile_name()
+	return M.provider_for_profile(profile_name)
+end
+
+function M.provider_for_profile(profile_name)
+	local profile = M.profile_by_name(profile_name)
 	if not profile then
 		return nil
 	end
@@ -164,11 +169,14 @@ function M.current_provider()
 end
 
 function M.current_profile()
+	return M.profile_by_name(M.current_profile_name())
+end
+
+function M.profile_by_name(profile_name)
 	if M.validation_error then
 		return nil
 	end
 
-	local profile_name = M.values.profile
 	local profile = M.values.profiles and M.values.profiles[profile_name] or nil
 	if not profile then
 		return nil
@@ -186,11 +194,14 @@ function M.current_profile_name()
 end
 
 function M.current_profile_error()
+	return M.profile_error(M.current_profile_name())
+end
+
+function M.profile_error(profile_name)
 	if M.validation_error then
 		return M.validation_error
 	end
 
-	local profile_name = M.values.profile
 	local profile = M.values.profiles and M.values.profiles[profile_name] or nil
 	if not profile then
 		return string.format("profile '%s' not found in setup().profiles", tostring(profile_name))
@@ -202,6 +213,15 @@ function M.current_profile_error()
 		)
 	end
 	return nil
+end
+
+function M.profile_names()
+	local names = {}
+	for name, _ in pairs(M.values.profiles or {}) do
+		table.insert(names, name)
+	end
+	table.sort(names)
+	return names
 end
 
 return M

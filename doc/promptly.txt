@@ -36,6 +36,9 @@ Supported suggestion kinds:
 
 :Promptly                                                      *:Promptly*
   Open prompt popup and request suggestions.
+  If multiple profiles are configured, switch profile with:
+  - <Tab>/<S-Tab>
+  - <C-n>/<C-p>
 
 :PromptlyHealth                                            *:PromptlyHealth*
   Check profile/provider configuration and endpoint reachability.

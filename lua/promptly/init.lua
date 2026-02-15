@@ -5,7 +5,7 @@ local ui = require("promptly.ui")
 local M = {}
 local request_lock = false
 
-local function start_spinner(label)
+local function start_spinner(label, profile_name)
 	local frames = { "-", "\\", "|", "/" }
 	local i = 1
 	local active = true
@@ -16,7 +16,7 @@ local function start_spinner(label)
 		if not active then
 			return
 		end
-		local text = string.format("%s promptly: %s", frames[i], label)
+		local text = string.format("%s promptly[%s]: %s", frames[i], profile_name or "unknown", label)
 		vim.api.nvim_echo({ { text, "ModeMsg" } }, false, {})
 		i = (i % #frames) + 1
 	end
@@ -137,28 +137,38 @@ function M.run(opts)
 		return
 	end
 
-	local profile = config.current_profile()
-	if not profile then
-		local err = config.current_profile_error() or "invalid profile configuration"
-		vim.notify("promptly: " .. err, vim.log.levels.ERROR)
+	local profile_names = config.profile_names()
+	if #profile_names == 0 then
+		vim.notify("promptly: no profiles configured in setup().profiles", vim.log.levels.ERROR)
 		return
 	end
 
-	local provider = config.current_provider()
-	if not provider then
-		vim.notify("promptly: invalid provider configuration", vim.log.levels.ERROR)
-		return
-	end
+	local initial_profile = config.current_profile_name()
 
-	local request = build_request(opts, profile)
-
-	ui.prompt(profile, function(prompt)
+	ui.prompt({
+		profile_names = profile_names,
+		initial_profile = initial_profile,
+	}, function(prompt, selected_profile_name)
 		if not prompt or prompt:gsub("%s+", "") == "" then
 			return
 		end
 
+		local profile_err = config.profile_error(selected_profile_name)
+		if profile_err then
+			vim.notify("promptly: " .. profile_err, vim.log.levels.ERROR)
+			return
+		end
+
+		local profile = config.profile_by_name(selected_profile_name)
+		local provider = config.provider_for_profile(selected_profile_name)
+		if not profile or not provider then
+			vim.notify("promptly: invalid provider configuration", vim.log.levels.ERROR)
+			return
+		end
+
+		local request = build_request(opts, profile)
 		request_lock = true
-		local stop_spinner = start_spinner("thinking...")
+		local stop_spinner = start_spinner("thinking...", selected_profile_name)
 
 		model.solve_async(provider, profile, prompt, request, function(answer, err)
 			request_lock = false

@@ -161,3 +161,7 @@ In result popup:
 - `<Esc>` or `q`: close
 - `<CR>`: apply suggestion #1
 - `1-9`: apply suggestion
+
+In prompt popup (when multiple profiles are configured):
+- `<Tab>` / `<S-Tab>`: next/previous profile
+- `<C-n>` / `<C-p>`: next/previous profile

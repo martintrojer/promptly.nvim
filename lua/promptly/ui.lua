@@ -4,9 +4,38 @@ local event = require("nui.utils.autocmd").event
 
 local M = {}
 
-function M.prompt(profile, on_submit)
-	local prompt_title = ((profile or {}).ui or {}).prompt_title or " Promptly Prompt "
+function M.prompt(opts, on_submit)
+	local profile_names = opts.profile_names or {}
+	local selected_index = 1
+	local selected_profile_name = opts.initial_profile
 	local input
+
+	if #profile_names > 0 then
+		for i, name in ipairs(profile_names) do
+			if name == selected_profile_name then
+				selected_index = i
+				break
+			end
+		end
+		selected_profile_name = profile_names[selected_index]
+	end
+
+	local function title()
+		local name = selected_profile_name or "unknown"
+		return string.format(" Promptly [%s] ", name)
+	end
+
+	local function cycle_profile(step)
+		if #profile_names <= 1 then
+			return
+		end
+		selected_index = ((selected_index - 1 + step) % #profile_names) + 1
+		selected_profile_name = profile_names[selected_index]
+		if input and input.border and input.border.set_text then
+			input.border:set_text("top", title())
+		end
+	end
+
 	input = Input({
 		relative = "cursor",
 		position = {
@@ -19,7 +48,7 @@ function M.prompt(profile, on_submit)
 		border = {
 			style = "rounded",
 			text = {
-				top = prompt_title,
+				top = title(),
 			},
 		},
 		win_options = {
@@ -30,7 +59,7 @@ function M.prompt(profile, on_submit)
 		default_value = "",
 		on_submit = function(value)
 			input:unmount()
-			on_submit(value)
+			on_submit(value, selected_profile_name)
 		end,
 	})
 
@@ -41,6 +70,22 @@ function M.prompt(profile, on_submit)
 
 	vim.keymap.set({ "n", "i" }, "<Esc>", function()
 		input:unmount()
+	end, { buffer = input.bufnr, nowait = true })
+
+	vim.keymap.set({ "n", "i" }, "<Tab>", function()
+		cycle_profile(1)
+	end, { buffer = input.bufnr, nowait = true })
+
+	vim.keymap.set({ "n", "i" }, "<S-Tab>", function()
+		cycle_profile(-1)
+	end, { buffer = input.bufnr, nowait = true })
+
+	vim.keymap.set({ "n", "i" }, "<C-n>", function()
+		cycle_profile(1)
+	end, { buffer = input.bufnr, nowait = true })
+
+	vim.keymap.set({ "n", "i" }, "<C-p>", function()
+		cycle_profile(-1)
 	end, { buffer = input.bufnr, nowait = true })
 end
 
