@@ -28,7 +28,7 @@ Supported suggestion kinds:
 >lua
   require("promptly").setup({
     providers = {
-      openai = {},
+      openai = {}, -- optional (built-in defaults inferred)
     },
     profiles = {
       promptly = {
@@ -57,9 +57,14 @@ Supported suggestion kinds:
 `profiles.<name>.system_message` is required and must be a non-empty string.
 Promptly starts on the first profile (sorted by name), and you can switch
 profiles from the prompt popup.
+Promptly includes a built-in profile named `code_assistant`.
+Set `include_default_profile = false` to hide it.
+By default `code_assistant` uses provider `openai`.
+Override with `profiles.code_assistant.provider`.
 
 >lua
   require("promptly").setup({
+    include_default_profile = false, -- optional
     providers = {
       openrouter = {
         kind = "openai_compatible", -- optional for built-ins
@@ -75,18 +80,18 @@ profiles from the prompt popup.
         provider = "openrouter",
         system_message = "You are a Neovim coding assistant. Prefer safe, minimal edits.",
         context = {
-          max_context_lines = 400,
-          include_current_line = true,
-          include_selection = true,
+          max_context_lines = 400, -- optional
+          include_current_line = true, -- optional
+          include_selection = true, -- optional
         },
       },
       golf_this = {
         provider = "openrouter",
         system_message = "You are a Vim golf specialist. Return shortest robust normal-mode sequences.",
         context = {
-          max_context_lines = 250,
-          include_current_line = true,
-          include_selection = true,
+          max_context_lines = 250, -- optional
+          include_current_line = true, -- optional
+          include_selection = true, -- optional
         },
       },
     },

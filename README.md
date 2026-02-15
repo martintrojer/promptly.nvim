@@ -36,6 +36,10 @@ Every profile must point to a provider name:
 - `profiles.<name>.provider` is required.
 - `profiles.<name>.system_message` is required and must be a non-empty string.
 - Promptly starts on the first profile (sorted by name), and you can switch in the popup.
+- Promptly ships with a built-in `code_assistant` profile.
+- Set `include_default_profile = false` to exclude the built-in default from profile cycling.
+- Built-in `code_assistant` uses provider `openai` by default.
+- Override it by setting `profiles.code_assistant.provider` in your setup.
 
 Inside `providers.<name>`:
 
@@ -61,8 +65,33 @@ Provider-specific optional fields:
 
 ## Configuration example (general coding assistant)
 
+To change which provider the built-in `code_assistant` profile uses, override
+that profile by name:
+
 ```lua
 require("promptly").setup({
+  providers = {
+    openrouter = {
+      kind = "openai_compatible", -- optional (inferred for built-in provider names)
+      url = "https://openrouter.ai/api/v1/chat/completions", -- optional (inferred)
+      model = "anthropic/claude-3.5-sonnet", -- optional (inferred default exists)
+      api_key_env = "OPENROUTER_API_KEY", -- optional (inferred to OPENROUTER_API_KEY)
+    },
+  },
+  profiles = {
+    code_assistant = {
+      provider = "openrouter",
+      system_message = "You are a Neovim coding assistant. Prefer safe, minimal edits.",
+    },
+  },
+})
+```
+
+```lua
+require("promptly").setup({
+  -- optional: exclude built-in "code_assistant" profile
+  include_default_profile = false,
+
   providers = {
     openrouter = {
       kind = "openai_compatible", -- optional (inferred for built-in provider names)
@@ -79,22 +108,22 @@ require("promptly").setup({
       provider = "openrouter",
       system_message = "You are a Neovim coding assistant. Prefer safe, minimal edits and explain tradeoffs briefly.", -- required
       context = {
-        max_context_lines = 400,
-        include_current_line = true,
-        include_selection = true,
+        max_context_lines = 400, -- optional
+        include_current_line = true, -- optional
+        include_selection = true, -- optional
       },
       apply = {
-        default = "first_suggestion",
+        default = "first_suggestion", -- optional
         handlers = {
-          keys = "feedkeys",
-          replace_selection = "replace_selection",
-          replace_buffer = "replace_buffer",
-          ex_command = "nvim_cmd",
+          keys = "feedkeys", -- optional
+          replace_selection = "replace_selection", -- optional
+          replace_buffer = "replace_buffer", -- optional
+          ex_command = "nvim_cmd", -- optional
         },
       },
       ui = {
-        prompt_title = " Promptly Prompt ",
-        result_title = " Promptly Suggestions ",
+        prompt_title = " Promptly Prompt ", -- optional
+        result_title = " Promptly Suggestions ", -- optional
       },
     },
   },
@@ -107,6 +136,8 @@ Use a dedicated profile named `golf_this`:
 
 ```lua
 require("promptly").setup({
+  include_default_profile = false, -- optional: hide built-in "code_assistant"
+
   providers = {
     openrouter = {
       kind = "openai_compatible", -- optional (inferred)
@@ -123,16 +154,16 @@ require("promptly").setup({
       provider = "openrouter",
       system_message = "You are a Vim golf specialist. Return shortest robust normal-mode sequences and avoid brittle absolute line-number jumps.", -- required
       context = {
-        max_context_lines = 250,
-        include_current_line = true,
-        include_selection = true,
+        max_context_lines = 250, -- optional
+        include_current_line = true, -- optional
+        include_selection = true, -- optional
       },
       ui = {
-        prompt_title = " Golf Prompt ",
-        result_title = " Golf Suggestions ",
+        prompt_title = " Golf Prompt ", -- optional
+        result_title = " Golf Suggestions ", -- optional
       },
       apply = {
-        default = "first_suggestion",
+        default = "first_suggestion", -- optional
       },
     },
   },

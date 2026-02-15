@@ -2,6 +2,7 @@ local M = {}
 M.validation_error = nil
 
 local defaults = {
+	include_default_profile = true,
 	providers = {
 		openai = {
 			kind = "openai_compatible",
@@ -33,16 +34,13 @@ local defaults = {
 		},
 	},
 	profiles = {
-		promptly = {
+		code_assistant = {
 			provider = "openai",
-			system_message = "You are a Neovim editing assistant. Prefer safe, minimal edits.",
+			system_message = "You are a Neovim coding assistant. Prefer safe, minimal edits and explain tradeoffs briefly.",
 			context = {
 				max_context_lines = 400,
 				include_current_line = true,
 				include_selection = true,
-			},
-			contract = {
-				format = "json",
 			},
 			apply = {
 				default = "first_suggestion",
@@ -54,8 +52,8 @@ local defaults = {
 				},
 			},
 			ui = {
-				prompt_title = " Promptly Prompt ",
-				result_title = " Promptly Suggestions ",
+				prompt_title = " Code Assistant Prompt ",
+				result_title = " Code Assistant Suggestions ",
 			},
 		},
 	},
@@ -133,6 +131,11 @@ end
 function M.setup(opts)
 	M.values = vim.tbl_deep_extend("force", vim.deepcopy(defaults), opts or {})
 	M.validation_error = nil
+
+	if M.values.include_default_profile == false and M.values.profiles then
+		M.values.profiles.code_assistant = nil
+	end
+
 	local names = M.profile_names()
 	if #names == 0 then
 		M.validation_error = "no profiles configured in setup().profiles"
