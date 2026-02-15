@@ -1,0 +1,114 @@
+*golf-this.txt* *golf-this*  vimgolf-style LLM helper for Neovim
+
+Author: martintrojer
+
+===============================================================================
+CONTENTS                                                    *golf-this-contents*
+
+1. Introduction..............................................|golf-this-intro|
+2. Requirements.......................................|golf-this-requirements|
+3. Setup.....................................................|golf-this-setup|
+4. Commands...............................................|golf-this-commands|
+5. Usage.....................................................|golf-this-usage|
+6. Configuration.............................................|golf-this-config|
+7. Providers.............................................|golf-this-providers|
+
+===============================================================================
+1. Introduction                                                 *golf-this-intro*
+
+golf-this.nvim asks a model to solve editing tasks with a short explanation,
+step list, and a single key sequence you can execute directly.
+
+===============================================================================
+2. Requirements                                           *golf-this-requirements*
+
+- Neovim 0.10+ for non-blocking async HTTP via |vim.system()|.
+- `nui.nvim` for inline prompt/answer popup UI.
+- `plenary.nvim` optional fallback for older Neovim HTTP behavior.
+
+===============================================================================
+3. Setup                                                       *golf-this-setup*
+
+Example with lazy.nvim:
+
+>lua
+  {
+    "martintrojer/golf-this",
+    dependencies = {
+      "MunifTanjim/nui.nvim",
+      "nvim-lua/plenary.nvim",
+    },
+    config = function()
+      require("golf_this").setup({
+        provider = "openai",
+      })
+    end,
+  }
+<
+
+===============================================================================
+4. Commands                                                 *golf-this-commands*
+
+:GolfThis                                                  *:GolfThis*
+  Open the prompt popup, send context to the configured provider, and show
+  explanation + steps + executable keys.
+
+:'<,'>GolfThis
+  Same command with range context (typically from Visual mode). Selected lines
+  are sent as explicit context in addition to current cursor line and excerpt.
+
+===============================================================================
+5. Usage                                                       *golf-this-usage*
+
+Default context includes:
+- current cursor line
+- buffer excerpt (up to `max_context_lines`)
+
+Range/Visual usage adds:
+- selected line range
+- selected text block
+
+Prompt popup:
+- <CR> submit prompt
+- <Esc> close
+
+Answer popup:
+- <CR> run "Do It" key sequence (if returned)
+- <Esc> or q close
+
+===============================================================================
+6. Configuration                                               *golf-this-config*
+
+>lua
+  require("golf_this").setup({
+    provider = "openrouter",
+    max_context_lines = 400,
+    providers = {
+      openrouter = {
+        kind = "openai_compatible",
+        url = "https://openrouter.ai/api/v1/chat/completions",
+        model = "anthropic/claude-3.5-sonnet",
+        api_key_env = "OPENROUTER_API_KEY",
+        referer = "https://example.com",
+        title = "golf-this.nvim",
+      },
+    },
+  })
+<
+
+===============================================================================
+7. Providers                                               *golf-this-providers*
+
+Built-in provider templates:
+- `openai` (OpenAI chat completions)
+- `openrouter` (OpenRouter OpenAI-compatible endpoint)
+- `anthropic` (Anthropic messages API)
+- `ollama` (local OpenAI-compatible endpoint)
+
+Each provider should define:
+- `kind`: `openai_compatible` or `anthropic`
+- `url`: API endpoint
+- `model`: model id
+- `api_key_env`: environment variable name for API key (optional for local)
+
+vim:tw=78:ts=8:noet:ft=help:norl:
