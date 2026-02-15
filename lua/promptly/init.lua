@@ -16,7 +16,7 @@ local function start_spinner(label, profile_name)
 		if not active then
 			return
 		end
-		local text = string.format("%s promptly[%s]: %s", frames[i], profile_name or "unknown", label)
+		local text = string.format("%s [prompty] %s %s", frames[i], profile_name or "unknown", label)
 		vim.api.nvim_echo({ { text, "ModeMsg" } }, false, {})
 		i = (i % #frames) + 1
 	end
