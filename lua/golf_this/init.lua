@@ -3,6 +3,47 @@ local model = require("golf_this.model")
 local ui = require("golf_this.ui")
 
 local M = {}
+local request_lock = false
+
+local function start_spinner(label)
+  local frames = { "-", "\\", "|", "/" }
+  local i = 1
+  local active = true
+  local uv = vim.uv or vim.loop
+  local timer = uv and uv.new_timer() or nil
+
+  local function render()
+    if not active then
+      return
+    end
+    local text = string.format("%s golf-this: %s", frames[i], label)
+    vim.api.nvim_echo({ { text, "ModeMsg" } }, false, {})
+    i = (i % #frames) + 1
+  end
+
+  render()
+
+  if timer then
+    timer:start(100, 100, vim.schedule_wrap(render))
+  end
+
+  return function(final_text, hl)
+    if not active then
+      return
+    end
+    active = false
+    if timer then
+      timer:stop()
+      timer:close()
+    end
+
+    if final_text and final_text ~= "" then
+      vim.api.nvim_echo({ { final_text, hl or "ModeMsg" } }, false, {})
+    else
+      vim.api.nvim_echo({ { "", "Normal" } }, false, {})
+    end
+  end
+end
 
 local function build_buffer_excerpt(max_lines)
   local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
@@ -44,6 +85,11 @@ local function feed_keys(keys)
 end
 
 function M.run(opts)
+  if request_lock then
+    vim.notify("golf-this: request already running", vim.log.levels.WARN)
+    return
+  end
+
   local provider = config.current_provider()
   if not provider then
     vim.notify("golf-this: invalid provider configuration", vim.log.levels.ERROR)
@@ -57,14 +103,18 @@ function M.run(opts)
       return
     end
 
-    vim.notify("golf-this: thinking...", vim.log.levels.INFO)
+    request_lock = true
+    local stop_spinner = start_spinner("thinking...")
 
     model.solve_async(provider, prompt, request, function(answer, err)
+      request_lock = false
       if err then
+        stop_spinner("golf-this: request failed", "ErrorMsg")
         vim.notify("golf-this: " .. err, vim.log.levels.ERROR)
         return
       end
 
+      stop_spinner("golf-this: done", "MoreMsg")
       ui.result(answer, feed_keys)
     end)
   end)
