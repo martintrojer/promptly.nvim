@@ -5,6 +5,45 @@ local ui = require("promptly.ui")
 local M = {}
 local request_lock = false
 
+local function apply_enabled(profile)
+	local apply = (profile or {}).apply
+	if type(apply) ~= "table" then
+		return true
+	end
+	return apply.enabled ~= false
+end
+
+local function allowed_kind_set(profile)
+	local apply = (profile or {}).apply
+	local allowed = type(apply) == "table" and apply.allowed_kinds or nil
+	if not vim.tbl_islist(allowed) or #allowed == 0 then
+		return nil
+	end
+
+	local set = {}
+	for _, kind in ipairs(allowed) do
+		if type(kind) == "string" and kind ~= "" then
+			set[kind] = true
+		end
+	end
+	return next(set) and set or nil
+end
+
+local function filter_suggestions(profile, suggestions)
+	local set = allowed_kind_set(profile)
+	if not set then
+		return suggestions
+	end
+
+	local filtered = {}
+	for _, suggestion in ipairs(suggestions or {}) do
+		if set[suggestion.kind] then
+			table.insert(filtered, suggestion)
+		end
+	end
+	return filtered
+end
+
 local function start_spinner(label, profile_name)
 	local frames = { "-", "\\", "|", "/" }
 	local i = 1
@@ -178,8 +217,15 @@ function M.run(opts)
 				return
 			end
 
+			answer.suggestions = filter_suggestions(profile, answer.suggestions)
 			stop_spinner("promptly: done", "MoreMsg")
-			ui.result(answer, profile, function(suggestion)
+			ui.result(answer, profile, {
+				apply_enabled = apply_enabled(profile),
+			}, function(suggestion)
+				if not apply_enabled(profile) then
+					vim.notify("promptly: apply is disabled for this profile", vim.log.levels.INFO)
+					return
+				end
 				apply_suggestion(suggestion, request)
 			end)
 		end)

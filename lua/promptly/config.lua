@@ -43,7 +43,9 @@ local defaults = {
 				include_selection = true,
 			},
 			apply = {
+				enabled = true,
 				default = "first_suggestion",
+				allowed_kinds = { "replace_selection" },
 			},
 			ui = {
 				prompt_title = " Code Assistant Prompt ",

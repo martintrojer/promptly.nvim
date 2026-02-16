@@ -34,6 +34,16 @@ function M.system_prompt(profile)
 		"If unsafe or unknown, return empty suggestions and explain.",
 	}
 
+	local apply = type(profile) == "table" and profile.apply or nil
+	local enabled = type(apply) == "table" and apply.enabled
+	local allowed = type(apply) == "table" and apply.allowed_kinds or nil
+	if vim.tbl_islist(allowed) and #allowed > 0 then
+		table.insert(parts, "Only use suggestion kinds: " .. table.concat(allowed, ", ") .. ".")
+	end
+	if enabled == false then
+		table.insert(parts, "Suggestions are advisory only and will not be executed by the editor.")
+	end
+
 	local custom = type(profile) == "table" and profile.system_message or nil
 	if type(custom) == "string" then
 		custom = vim.trim(custom)

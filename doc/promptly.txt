@@ -9,6 +9,7 @@ CONTENTS                                                        *promptly-conten
 2. Setup.........................................................|promptly-setup|
 3. Commands...................................................|promptly-commands|
 4. Configuration.................................................|promptly-config|
+5. Suggestion kinds..............................................|promptly-kinds|
 
 ===============================================================================
 1. Introduction                                                     *promptly-intro*
@@ -61,6 +62,8 @@ Promptly includes a built-in profile named `code_assistant`.
 Set `include_default_profile = false` to hide it.
 By default `code_assistant` uses provider `openai`.
 Override with `profiles.code_assistant.provider`.
+Use `apply.enabled = false` to disable all apply actions for a profile.
+Use `apply.allowed_kinds = { ... }` to restrict apply kinds.
 
 >lua
   require("promptly").setup({
@@ -79,6 +82,10 @@ Override with `profiles.code_assistant.provider`.
       code_assist = {
         provider = "openrouter",
         system_message = "You are a Neovim coding assistant. Prefer safe, minimal edits.",
+        apply = {
+          enabled = true, -- optional
+          allowed_kinds = { "replace_selection" }, -- optional
+        },
         context = {
           max_context_lines = 400, -- optional
           include_current_line = true, -- optional
@@ -88,6 +95,10 @@ Override with `profiles.code_assistant.provider`.
       golf_this = {
         provider = "openrouter",
         system_message = "You are a Vim golf specialist. Return shortest robust normal-mode sequences.",
+        apply = {
+          enabled = false, -- optional
+          allowed_kinds = { "keys" }, -- optional
+        },
         context = {
           max_context_lines = 250, -- optional
           include_current_line = true, -- optional
@@ -97,5 +108,23 @@ Override with `profiles.code_assistant.provider`.
     },
   })
 <
+
+===============================================================================
+5. Suggestion kinds                                                *promptly-kinds*
+
+- keys
+  Runs payload as Normal-mode keys via `nvim_feedkeys`.
+  Useful for Vim-golf style edits.
+
+- replace_selection
+  Replaces selected lines with payload text.
+  Requires range/Visual selection.
+
+- replace_buffer
+  Replaces the entire current buffer with payload text.
+
+- ex_command
+  Runs payload as `vim.cmd(...)`.
+  Use carefully.
 
 vim:tw=78:ts=8:noet:ft=help:norl:

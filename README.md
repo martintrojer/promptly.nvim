@@ -15,6 +15,25 @@ Supported suggestion kinds:
 - `replace_buffer`
 - `ex_command`
 
+## Suggestion kinds reference
+
+- `keys`
+  - Behavior: executes Normal-mode key sequence via `nvim_feedkeys`.
+  - Best for: Vim-golf style edits.
+  - Note: can be brittle if model returns context-sensitive motions.
+- `replace_selection`
+  - Behavior: replaces the selected range (`:'<,'>Promptly`) with payload text.
+  - Best for: targeted rewrites/refactors.
+  - Note: requires a selected range; otherwise apply is skipped with a warning.
+- `replace_buffer`
+  - Behavior: replaces the entire current buffer with payload text.
+  - Best for: full-file rewrites or generated file content.
+  - Note: destructive to current buffer contents.
+- `ex_command`
+  - Behavior: runs payload as `vim.cmd(...)`.
+  - Best for: explicit editor commands.
+  - Note: high-impact; use carefully.
+
 ## Install
 
 Repository: [https://github.com/martintrojer/promptly.nvim](https://github.com/martintrojer/promptly.nvim)
@@ -107,13 +126,15 @@ require("promptly").setup({
     code_assist = {
       provider = "openrouter",
       system_message = "You are a Neovim coding assistant. Prefer safe, minimal edits and explain tradeoffs briefly.", -- required
+      apply = {
+        enabled = true, -- optional
+        allowed_kinds = { "replace_selection" }, -- optional
+        default = "first_suggestion", -- optional
+      },
       context = {
         max_context_lines = 400, -- optional
         include_current_line = true, -- optional
         include_selection = true, -- optional
-      },
-      apply = {
-        default = "first_suggestion", -- optional
       },
       ui = {
         prompt_title = " Promptly Prompt ", -- optional
@@ -147,6 +168,10 @@ require("promptly").setup({
     golf_this = {
       provider = "openrouter",
       system_message = "You are a Vim golf specialist. Return shortest robust normal-mode sequences and avoid brittle absolute line-number jumps.", -- required
+      apply = {
+        enabled = false, -- optional (prevents all apply actions for this profile)
+        allowed_kinds = { "keys" }, -- optional (advisory key sequences only)
+      },
       context = {
         max_context_lines = 250, -- optional
         include_current_line = true, -- optional
@@ -155,9 +180,6 @@ require("promptly").setup({
       ui = {
         prompt_title = " Golf Prompt ", -- optional
         result_title = " Golf Suggestions ", -- optional
-      },
-      apply = {
-        default = "first_suggestion", -- optional
       },
     },
   },
@@ -187,3 +209,7 @@ In result popup:
 In prompt popup (when multiple profiles are configured):
 - `<Tab>` / `<S-Tab>`: next/previous profile
 - `<C-n>` / `<C-p>`: next/previous profile
+
+Apply controls per profile:
+- `apply.enabled = false` disables all apply actions in the result popup.
+- `apply.allowed_kinds = { ... }` restricts apply to specific suggestion kinds.

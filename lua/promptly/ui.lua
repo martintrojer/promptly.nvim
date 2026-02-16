@@ -103,7 +103,8 @@ function M.prompt(opts, on_submit)
 	end, { buffer = input.bufnr, nowait = true })
 end
 
-function M.result(answer, profile, on_apply)
+function M.result(answer, profile, opts, on_apply)
+	local can_apply = (opts or {}).apply_enabled ~= false
 	local result_title = ((profile or {}).ui or {}).result_title or " Promptly Suggestions "
 	local lines = {
 		"Promptly",
@@ -141,7 +142,11 @@ function M.result(answer, profile, on_apply)
 			end
 		end
 		table.insert(lines, "")
-		table.insert(lines, "<CR>: Apply #1   1-9: Apply choice   <Esc>/q: Close")
+		if can_apply then
+			table.insert(lines, "<CR>: Apply #1   1-9: Apply choice   <Esc>/q: Close")
+		else
+			table.insert(lines, "Apply disabled for this profile   <Esc>/q: Close")
+		end
 	end
 
 	local popup = Popup({
@@ -175,7 +180,7 @@ function M.result(answer, profile, on_apply)
 	vim.keymap.set("n", "<Esc>", close, { buffer = popup.bufnr, nowait = true })
 	vim.keymap.set("n", "q", close, { buffer = popup.bufnr, nowait = true })
 
-	if #answer.suggestions > 0 then
+	if can_apply and #answer.suggestions > 0 then
 		vim.keymap.set("n", "<CR>", function()
 			close()
 			on_apply(answer.suggestions[1])
